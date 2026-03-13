@@ -1,0 +1,28 @@
+name: orl-vancity-crime
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.11
+
+  # Core scientific stack
+  - pandas=3.0.1
+
+  # Geospatial
+  - geopandas=1.1.2
+  - pyproj=3.7.2
+
+  # Visualization
+  - altair=4.2.2
+  - vega_datasets=0.9.0
+
+  # Framework
+  - streamlit-folium=0.11.0
+
+  - pip
+  - pip:
+      - streamlit==1.55.0
+      - folium==0.20.0
+      - faicons==0.2.2
+      - protobuf==3.20.3
