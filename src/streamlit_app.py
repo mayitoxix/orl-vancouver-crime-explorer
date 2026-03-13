@@ -83,3 +83,25 @@ st.write(f"**{len(filtered_df):,} incidents match the selected filters**")
 if st.sidebar.button("Reset filters"):
     st.rerun()
 
+
+# Show filtered data (all columns)
+
+# preview_cols = [
+#     "TYPE",
+#     "MONTH_NAME",
+#     "DAY",
+#     "TIME_OF_DAY",
+#     "NEIGHBOURHOOD",
+#     "HUNDRED_BLOCK",
+# ]
+
+# # Validate available columns
+# available_preview_cols = [c for c in preview_cols if c in filtered_df.columns]
+
+st.dataframe(
+    #filtered_df[available_preview_cols],
+    filtered_df,
+    use_container_width=True,
+    height=500
+)
+
