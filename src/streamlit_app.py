@@ -49,3 +49,37 @@ selected_time_of_day = st.sidebar.multiselect(
     "Time of Day",
     time_of_day_order
 )
+
+def get_filtered_data(df, neighbourhood, crime_type, month, time_of_day):
+    
+    out = df.copy()
+
+    if neighbourhood:
+        out = out[out["NEIGHBOURHOOD"].isin(neighbourhood)]
+
+    if crime_type:
+        out = out[out["TYPE"].isin(crime_type)]
+
+    if month:
+        out = out[out["MONTH_NAME"].isin(month)]
+
+    if time_of_day:
+        out = out[out["TIME_OF_DAY"].isin(time_of_day)]
+
+    return out
+
+
+filtered_df = get_filtered_data(
+    crime_df,
+    selected_nb,
+    selected_crime_trype,
+    selected_month,
+    selected_time_of_day
+)
+
+# Quick check
+st.write(f"**{len(filtered_df):,} incidents match the selected filters**")
+
+if st.sidebar.button("Reset filters"):
+    st.rerun()
+
