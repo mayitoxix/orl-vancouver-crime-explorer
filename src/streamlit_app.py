@@ -127,41 +127,49 @@ if not top_5_crimes.empty:
 # Dashboard
 # -----------------
 
-# Top 5 Bar chart
-if top_5_crimes.empty:
-    st.warning("No data for current filters.")
-else:
-    bar_chart = (
-        alt.Chart(top_5_crimes)
-        .mark_bar(size=18)
-        .encode(
-            x=alt.X("Percent Share:Q", title="Percent of Incidents"),
-            y=alt.Y(
-                "TYPE:N",
-                sort="-x",
-                title="",
-                axis=alt.Axis(labelLimit=220),
-                scale=alt.Scale(paddingInner=0.08)
-            ),
-            color=alt.Color(
-                "Percent Share:Q",
-                scale=alt.Scale(scheme="tealblues"),
-                legend=None,
-            ),
-            tooltip=[
-                alt.Tooltip("TYPE:N", title="Crime Type"),
-                alt.Tooltip("Incidents:Q"),
-                alt.Tooltip("Percent Share:Q", format=".1f"),
-            ]
-            
-        )
-        .properties(
-            height=300,
-            title="Top 5 Crime Types"
-        )
-    )
+# Layout
+col1, col2 = st.columns([7, 5])
 
-st.altair_chart(bar_chart, width="stretch")
+# Map side
+with col1:
+    st.subheader("Map")
+
+# Top 5 Bar Chart
+with col2:
+    st.subheader("Top 5 Crime Types")
+    if top_5_crimes.empty:
+        st.warning("No data for current filters.")
+    else:
+        bar_chart = (
+            alt.Chart(top_5_crimes)
+            .mark_bar(size=18)
+            .encode(
+                x=alt.X("Percent Share:Q", title="Percent of Incidents"),
+                y=alt.Y(
+                    "TYPE:N",
+                    sort="-x",
+                    title="",
+                    axis=alt.Axis(labelLimit=150),
+                    scale=alt.Scale(paddingInner=0)
+                ),
+                color=alt.Color(
+                    "Percent Share:Q",
+                    scale=alt.Scale(scheme="tealblues"),
+                    legend=None,
+                ),
+                tooltip=[
+                    alt.Tooltip("TYPE:N", title="Crime Type"),
+                    alt.Tooltip("Incidents:Q"),
+                    alt.Tooltip("Percent Share:Q", format=".1f"),
+                ]   
+            )
+            .properties(
+                height=300,
+                # title="Top 5 Crime Types"
+            )
+        )
+
+    st.altair_chart(bar_chart, width="stretch")
 
 # Quick check
 st.write(f"**{len(all_filtered_df):,} incidents match the selected filters**")
