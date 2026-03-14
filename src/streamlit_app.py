@@ -2,10 +2,15 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import geopandas as gpd
+import folium
+from folium.plugins import HeatMap
+from pyproj import Transformer
+from streamlit_folium import st_folium
+
 
 st.set_page_config(
     page_title="Vancouver Neighbourhood Safety Explorer", 
-    layout = "wide"
+    layout="wide"
 )
 
 st.title("🍁 Vancouver Neighbourhood Safety")
@@ -23,6 +28,40 @@ def load_crime_data():
 
 
 crime_df = load_crime_data()
+
+@st.cache_data
+def load_neighbourhoods():
+    gdf = gpd.read_file(
+        "data/processed/merged_vancity.gpkg",
+        layer="merged_vancity"
+    )
+    return gdf.to_crs(epsg=4326)
+
+
+neigh_gdf = load_neighbourhoods()
+
+@st.cache_data
+def filtered_latlon():
+    df = load_crime_data().copy()
+
+    df["X"] = pd.to_numeric(df["X"], errors="coerce")
+    df["Y"] = pd.to_numeric(df["Y"], errors="coerce")
+    df = df.dropna(subset=["X", "Y"])
+
+    if df.empty:
+        return pd.DataFrame(columns=["lat", "lon"])
+    
+    # Source UTM Zone 10N WGS84 EPSG:32610 to WGS84 lat/lon EPSG:4326
+    transformer = Transformer.from_crs("EPSG:32610", "EPSG:4326", always_xy=True)
+    lons, lats = transformer.transform(df["X"].to_numpy(), df["Y"].to_numpy())
+    
+    df["lat"] = lats
+    df["lon"] = lons
+
+    return df
+
+
+crime_df = filtered_latlon()
 
 
 # -----------------
@@ -55,8 +94,8 @@ selected_time_of_day = st.sidebar.multiselect(
     time_of_day_order
 )
 
-if st.sidebar.button("Reset filters"):
-    st.rerun()
+# if st.sidebar.button("Reset filters"):
+#     st.rerun()
 
 
 # -----------------
@@ -67,13 +106,10 @@ def get_filtered_data(df, neighbourhood, crime_type, month, time_of_day):
 
     if neighbourhood:
         out = out[out["NEIGHBOURHOOD"].isin(neighbourhood)]
-
     if crime_type:
         out = out[out["TYPE"].isin(crime_type)]
-
     if month:
         out = out[out["MONTH_NAME"].isin(month)]
-
     if time_of_day:
         out = out[out["TIME_OF_DAY"].isin(time_of_day)]
 
@@ -93,10 +129,8 @@ def get_filtered_data_no_creime_type(df, neighbourhood, month, time_of_day):
 
     if neighbourhood:
         out = out[out["NEIGHBOURHOOD"].isin(neighbourhood)]
-
     if month:
         out = out[out["MONTH_NAME"].isin(month)]
-
     if time_of_day:
         out = out[out["TIME_OF_DAY"].isin(time_of_day)]
 
@@ -132,7 +166,48 @@ col1, col2 = st.columns([7, 5])
 
 # Map side
 with col1:
-    st.subheader("Map")
+    st.subheader("Crime Across Neighbourhoods")
+
+    vancity_center = [49.2827, -123.1207]
+        
+    # Map base
+    m = folium.Map(
+        location=vancity_center,
+        zoom_start=12,
+        tiles="CartoDB positron",
+        #width="100%",
+        #height="100%",
+    )
+    
+    # Add neighbourhood polygons (default-persistent style)
+    folium.GeoJson(
+        neigh_gdf.__geo_interface__,
+        name="Neighbourhoods",
+        style_function=lambda _feature: {
+            "fillOpacity": 0.03,
+            "weight": 1,
+            "color": "#555555",
+        },
+    ).add_to(m)
+
+    # Heatmap
+    heat_data = all_filtered_df[["lat", "lon"]].values.tolist()
+
+    if heat_data:
+                HeatMap(
+                    heat_data,
+                    radius=14,
+                    blur=18,
+                    max_zoom=13,
+                ).add_to(m)
+
+    st_folium(
+        m,
+        #width=None,
+        height=400,
+        width="stretch"
+    )
+
 
 # Top 5 Bar Chart
 with col2:
@@ -142,7 +217,7 @@ with col2:
     else:
         bar_chart = (
             alt.Chart(top_5_crimes)
-            .mark_bar(size=18)
+            .mark_bar(size=50)
             .encode(
                 x=alt.X("Percent Share:Q", title="Percent of Incidents"),
                 y=alt.Y(
@@ -164,7 +239,7 @@ with col2:
                 ]   
             )
             .properties(
-                height=300,
+                height=400,
                 # title="Top 5 Crime Types"
             )
         )
@@ -182,5 +257,4 @@ st.dataframe(
     width="stretch",
     height=500
 )
-
 
