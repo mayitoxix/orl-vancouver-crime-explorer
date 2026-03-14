@@ -135,12 +135,24 @@ else:
         alt.Chart(top_5_crimes)
         .mark_bar(size=18)
         .encode(
-            x=alt.X("Percent Share", title="Percent of Incidents"),
+            x=alt.X("Percent Share:Q", title="Percent of Incidents"),
             y=alt.Y(
                 "TYPE:N",
                 sort="-x",
-
-            )
+                title="",
+                axis=alt.Axis(labelLimit=220),
+                scale=alt.Scale(paddingInner=0.08)
+            ),
+            color=alt.Color(
+                "Percent Share:Q",
+                scale=alt.Scale(scheme="tealblues"),
+                legend=None,
+            ),
+            tooltip=[
+                alt.Tooltip("TYPE:N", title="Crime Type"),
+                alt.Tooltip("Incidents:Q"),
+                alt.Tooltip("Percent Share:Q", format=".1f"),
+            ]
             
         )
         .properties(
