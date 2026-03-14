@@ -217,7 +217,7 @@ with col2:
     else:
         bar_chart = (
             alt.Chart(top_5_crimes)
-            .mark_bar(size=50)
+            .mark_bar(size=40)
             .encode(
                 x=alt.X("Percent Share:Q", title="Percent of Incidents"),
                 y=alt.Y(
