@@ -14,17 +14,22 @@ st.markdown(
     "and review filtered records. For year 2025."
 )
 
+# -----------------
 # Data
+# -----------------
 @st.cache_data
 def load_crime_data():
     return pd.read_csv("data/processed/processed_vancouver_crime_data_2025.csv")
 
+
 crime_df = load_crime_data()
 
-# Sidebar filters
+
+# -----------------
+# Sidebar
+# -----------------
 months_order = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 time_of_day_order = ["Morning", "Afternoon", "Evening/Night"]
-
 
 st.sidebar.header("Filters")
 
@@ -50,8 +55,14 @@ selected_time_of_day = st.sidebar.multiselect(
     time_of_day_order
 )
 
+if st.sidebar.button("Reset filters"):
+    st.rerun()
+
+
+# -----------------
+# Filtered data
+# -----------------
 def get_filtered_data(df, neighbourhood, crime_type, month, time_of_day):
-    
     out = df.copy()
 
     if neighbourhood:
@@ -69,7 +80,7 @@ def get_filtered_data(df, neighbourhood, crime_type, month, time_of_day):
     return out
 
 
-filtered_df = get_filtered_data(
+all_filtered_df = get_filtered_data(
     crime_df,
     selected_nb,
     selected_crime_trype,
@@ -77,31 +88,79 @@ filtered_df = get_filtered_data(
     selected_time_of_day
 )
 
+def get_filtered_data_no_creime_type(df, neighbourhood, month, time_of_day):
+    out = df.copy()
+
+    if neighbourhood:
+        out = out[out["NEIGHBOURHOOD"].isin(neighbourhood)]
+
+    if month:
+        out = out[out["MONTH_NAME"].isin(month)]
+
+    if time_of_day:
+        out = out[out["TIME_OF_DAY"].isin(time_of_day)]
+
+    return out
+
+
+no_crime_filtered_df = get_filtered_data_no_creime_type(
+    crime_df,
+    selected_nb,
+    selected_month,
+    selected_time_of_day
+)
+
+top_5_crimes = (
+    no_crime_filtered_df.groupby("TYPE")
+    .size()
+    .sort_values(ascending=False)
+    .head(5)
+    .reset_index(name="Incidents")
+)
+
+if not top_5_crimes.empty:
+    total = top_5_crimes["Incidents"].sum()
+    top_5_crimes["Percent Share"] = (top_5_crimes["Incidents"] / total) * 100
+
+
+# -----------------
+# Dashboard
+# -----------------
+
+# Top 5 Bar chart
+if top_5_crimes.empty:
+    st.warning("No data for current filters.")
+else:
+    bar_chart = (
+        alt.Chart(top_5_crimes)
+        .mark_bar(size=18)
+        .encode(
+            x=alt.X("Percent Share", title="Percent of Incidents"),
+            y=alt.Y(
+                "TYPE:N",
+                sort="-x",
+
+            )
+            
+        )
+        .properties(
+            height=300,
+            title="Top 5 Crime Types"
+        )
+    )
+
+st.altair_chart(bar_chart, width="stretch")
+
 # Quick check
-st.write(f"**{len(filtered_df):,} incidents match the selected filters**")
-
-if st.sidebar.button("Reset filters"):
-    st.rerun()
-
+st.write(f"**{len(all_filtered_df):,} incidents match the selected filters**")
 
 # Show filtered data (all columns)
-
-# preview_cols = [
-#     "TYPE",
-#     "MONTH_NAME",
-#     "DAY",
-#     "TIME_OF_DAY",
-#     "NEIGHBOURHOOD",
-#     "HUNDRED_BLOCK",
-# ]
-
-# # Validate available columns
-# available_preview_cols = [c for c in preview_cols if c in filtered_df.columns]
-
 st.dataframe(
-    #filtered_df[available_preview_cols],
-    filtered_df,
-    use_container_width=True,
+    # all_filtered_df[available_preview_cols],
+    all_filtered_df,
+    # use_container_width=True, # to be deprecated
+    width="stretch",
     height=500
 )
+
 
