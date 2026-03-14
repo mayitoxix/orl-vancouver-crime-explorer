@@ -3,6 +3,9 @@
 ## Overview
 This project provides an interactive Streamlit dashboard for exploring crime patterns across Vancouver neighbourhoods. Users can filter incidents by neighbourhood, crime type, month, and time of day to examine how crime is distributed throughout the city. This dashboard uses Vancouver Police Department crime data for 2025.
 
+## Visualization
+[Dashboard Posit Link](https://019cead2-1bb1-77e5-4e73-5162de1a7e10.share.connect.posit.cloud/)
+
 ## Run Application
 Follow these steps to clone and run this application locally:
 
